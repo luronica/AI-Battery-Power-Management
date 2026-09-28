@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light">
+    <title>AI-Based Smart Battery-Aware Power Management System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script defer src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+    <script defer src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</head>
+<body>
+    <a class="skip-link" href="#dashboard">Skip to dashboard</a>
+    <aside class="sidebar">
+        <a class="brand" href="#dashboard"><span class="brand-icon" aria-hidden="true">ϟ</span><span>Battery<span class="accent">IQ</span><small>INTELLIGENT ENERGY SYSTEMS</small></span></a>
+        <p class="nav-label">WORKSPACE</p>
+        <nav aria-label="Main navigation">
+            <a href="#dashboard" class="active" aria-current="location"><span aria-hidden="true">▦</span> Overview</a>
+            <a href="#telemetry"><span aria-hidden="true">∿</span> Battery telemetry</a>
+            <a href="#analysis"><span aria-hidden="true">◇</span> AI analysis</a>
+            <a href="#power-management"><span aria-hidden="true">ϟ</span> Power management</a>
+            <a href="#activity"><span aria-hidden="true">≡</span> System activity</a>
+        </nav>
+        <div class="sidebar-footer"><span class="phase-tag">ENERGY MONITORING</span><p>Observe. Predict. Optimize.</p><small>Single-cell battery analytics<br>Engineering capstone project</small></div>
+    </aside>
+
+    <main id="dashboard">
+        <div class="topbar">
+            <span class="breadcrumb">WORKSPACE <span class="separator">/</span> <strong>Overview</strong></span>
+            <div class="header-statuses" aria-label="System indicators">
+                <span id="system-status" class="status" data-status="WAITING" role="status">System Connecting</span>
+                <span class="status source-status">Data Source <strong id="data-source">—</strong></span>
+                <span id="model-indicator" class="status model-status" data-mode="READY">AI Model <strong id="model-status">—</strong></span>
+            </div>
+        </div>
+        <header class="page-header">
+            <p class="eyebrow">ENERGY INTELLIGENCE / OVERVIEW</p>
+            <h1>AI-Based Smart Battery-Aware Power Management System</h1>
+            <p class="subtitle">Intelligent Energy Monitoring &amp; Adaptive Power Optimization for IoT Devices</p>
+        </header>
+        <noscript><p class="error-banner">Enable JavaScript for live readings and simulation controls.</p></noscript>
+        <p id="connection-error" class="error-banner" role="alert" hidden></p>
+
+        <section class="card controls-panel" aria-label="Demonstration controls">
+            <div class="control-intro"><p class="eyebrow">DEMO CONTROLS</p><strong>Explore the battery response</strong><small id="clock-note">Connecting to the local telemetry pipeline…</small></div>
+            <div class="control-fields">
+                <label class="toggle-label"><input id="simulation-toggle" type="checkbox" disabled><span>Simulation <strong id="simulation-state">—</strong></span></label>
+                <label class="load-label" for="device-load">Device load<select id="device-load" disabled><option value="LOW">LOW</option><option value="MEDIUM" selected>MEDIUM</option><option value="HIGH">HIGH</option></select></label>
+                <button id="reset-simulation" type="button" class="secondary-button" disabled>Reset simulation</button>
+            </div>
+            <p id="control-feedback" class="control-feedback" role="status">Controls affect the simulator. An ESP32 POST automatically pauses simulation.</p>
+        </section>
+
+        <div class="context-strip"><h2>Battery overview</h2><span>LAST SAMPLE <strong id="last-sample">Waiting</strong></span></div>
+        <section class="metrics" aria-label="Battery overview">
+            <article class="card metric"><div class="metric-label">State of Charge (SoC)<span class="metric-symbol">↗</span></div><p class="metric-value accent"><span id="soc" class="number">—</span><span>%</span></p><div id="soc-meter" class="meter" role="meter" aria-label="Estimated battery state of charge" aria-valuemin="0" aria-valuemax="100"><span></span></div><p class="metric-foot">Estimated · hybrid coulomb + voltage</p></article>
+            <article class="card metric"><div class="metric-label">State of Health (SoH)<span class="metric-symbol">◇</span></div><p class="metric-value"><span id="soh" class="number">—</span><span>%</span></p><div id="soh-meter" class="meter blue" role="meter" aria-label="Estimated battery state of health" aria-valuemin="0" aria-valuemax="100"><span></span></div><p class="metric-foot">Estimated · assumed usable capacity</p></article>
+            <article class="card metric"><div class="metric-label">Voltage<span class="metric-symbol">ϟ</span></div><p class="metric-value"><span id="voltage" class="number">—</span> <span>V</span></p><p class="metric-foot">Single-cell terminal voltage</p></article>
+            <article class="card metric"><div class="metric-label">Current<span class="metric-symbol">∿</span></div><p class="metric-value"><span id="current" class="number">—</span> <span>A</span></p><p class="metric-foot">Discharge current</p></article>
+            <article class="card metric"><div class="metric-label">Temperature<span class="metric-symbol">°</span></div><p class="metric-value"><span id="temperature" class="number">—</span> <span>°C</span></p><p class="metric-foot">Battery thermal condition</p></article>
+            <article class="card metric"><div class="metric-label">Power Consumption<span class="metric-symbol">ϟ</span></div><p class="metric-value"><span id="power" class="number">—</span> <span>W</span></p><p class="metric-foot">Calculated · voltage × current</p></article>
+            <article class="card metric"><div id="runtime-label" class="metric-label">AI Predicted Runtime<span class="metric-symbol">◷</span></div><p id="runtime" class="metric-value runtime">—</p><p id="runtime-method" class="metric-foot">Waiting for prediction</p></article>
+            <article class="card metric"><div class="metric-label">Current Power Mode<span class="metric-symbol">⌁</span></div><p id="power-mode" class="mode-value">—</p><p class="metric-foot">Automatic · multi-factor decision</p></article>
+        </section>
+        <div class="energy-strip card"><div><span>ACCUMULATED ENERGY</span><strong><span id="energy">—</span> Wh</strong></div><div><span>BATTERY TIME TRACKED</span><strong id="battery-time">—</strong></div><p id="energy-note">Integrated energy for the selected source and session.</p></div>
+
+        <section id="telemetry" class="card telemetry">
+            <div class="section-heading"><div><p class="eyebrow">TELEMETRY</p><h2>Live Battery Telemetry</h2></div><span id="telemetry-badge" class="badge">Waiting for samples</span></div>
+            <div class="chart-heading"><h3>Real-Time Battery Monitoring</h3><span class="legend"><i></i> Latest 60 samples · local receipt time</span></div>
+            <div class="chart-grid">
+                <div class="chart-card wide-chart"><h3>State of Charge <span>% · estimated</span></h3><div class="chart-wrap"><canvas id="soc-chart" role="img" aria-label="Live state of charge over time"></canvas></div></div>
+                <div class="chart-card"><h3>Voltage <span>V</span></h3><div class="chart-wrap"><canvas id="voltage-chart" role="img" aria-label="Live voltage over time"></canvas></div></div>
+                <div class="chart-card"><h3>Current <span>A</span></h3><div class="chart-wrap"><canvas id="current-chart" role="img" aria-label="Live current over time"></canvas></div></div>
+                <div class="chart-card"><h3>Temperature <span>°C</span></h3><div class="chart-wrap"><canvas id="temperature-chart" role="img" aria-label="Live temperature over time"></canvas></div></div>
+                <div class="chart-card"><h3>Power Consumption <span>W · calculated</span></h3><div class="chart-wrap"><canvas id="power-chart" role="img" aria-label="Live power consumption over time"></canvas></div></div>
+            </div>
+            <p id="chart-message" class="chart-message" role="status">Waiting for telemetry…</p>
+        </section>
+
+        <div class="details-grid">
+            <section id="analysis" class="card detail-card"><div class="section-heading"><h2>AI Battery Analysis</h2><span class="feature-icon" aria-hidden="true">◇</span></div>
+                <dl class="analysis-list"><div><dt>Remaining runtime</dt><dd id="analysis-runtime">—</dd></div><div><dt>Consumption trend</dt><dd id="consumption-trend">—</dd></div><div><dt>Battery condition</dt><dd id="battery-condition">—</dd></div><div><dt>AI model status</dt><dd id="analysis-model">—</dd></div></dl>
+                <p id="model-reason" class="muted">Waiting for model information.</p>
+                <div class="recommendation-panel"><h3 class="panel-subheading">Latest recommendations</h3><ul id="recommendations" class="recommendations"><li>Waiting for the first reading.</li></ul></div>
+                <details class="model-information"><summary>Model information &amp; evaluation</summary><div id="model-info">Loading…</div></details>
+            </section>
+            <section id="power-management" class="card detail-card"><div class="section-heading"><h2>Smart Power Management</h2><span class="feature-icon" aria-hidden="true">ϟ</span></div>
+                <span id="policy-mode" class="badge">Waiting</span><p id="policy-reason" class="muted">Automatic policy selection begins with the first reading.</p>
+                <dl class="analysis-list"><div><dt>Sampling interval</dt><dd id="sampling-interval">—</dd></div><div><dt>Communication policy</dt><dd id="communication-policy">—</dd></div><div><dt>Estimated energy saving</dt><dd id="energy-saving">—</dd></div></dl>
+                <h3 class="panel-subheading">Optimization actions</h3><ul id="optimization-actions" class="recommendations"><li>Waiting for telemetry.</li></ul>
+                <p class="muted policy-note">Savings are assumed relative to PERFORMANCE at the same load. Policies reduce simulated current; ESP32 firmware must implement returned actions. Backend chart updates remain every 2 seconds.</p>
+            </section>
+            <section id="activity" class="card detail-card"><div class="section-heading"><h2>Recent System Activity</h2><span class="feature-icon" aria-hidden="true">≡</span></div><span class="badge">Recorded application events</span><ul id="activity-list" class="activity-list"><li>Waiting for system events.</li></ul></section>
+        </div>
+        <footer>BatteryIQ <span>Engineering capstone · Battery monitoring &amp; adaptive power optimization</span></footer>
+    </main>
+</body>
+</html>

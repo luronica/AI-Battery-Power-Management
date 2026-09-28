@@ -1,0 +1,21 @@
+# A paid instance/disk preserves SQLite history across deployments and restarts.
+services:
+  - type: web
+    name: ai-battery-power-management
+    runtime: python
+    plan: starter
+    numInstances: 1
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.20
+      - key: DATA_DIR
+        value: /var/data
+      - key: PYTHONUNBUFFERED
+        value: "1"
+    disk:
+      name: battery-storage
+      mountPath: /var/data
+      sizeGB: 1

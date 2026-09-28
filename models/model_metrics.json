@@ -1,0 +1,41 @@
+{
+  "model": "RandomForestRegressor",
+  "features": [
+    "voltage",
+    "current",
+    "temperature",
+    "soc",
+    "soh",
+    "power",
+    "recent_average_current",
+    "recent_average_power",
+    "device_load"
+  ],
+  "metrics": {
+    "mae_hours": 0.3033769681590672,
+    "rmse_hours": 0.5933013436852731,
+    "r2": 0.9955057093051844,
+    "baseline_mae_hours": 0.3745046590968543
+  },
+  "training_rows": 12800,
+  "test_rows": 3200,
+  "seed": 42,
+  "trees": 120,
+  "sklearn_version": "1.7.2",
+  "trained_at": "2026-09-28T14:29:25.457284+00:00",
+  "dataset": "Independent synthetic scenarios; 80/20 held-out split",
+  "target_unit": "hours",
+  "runtime_cap_hours": 48,
+  "limitations": "Synthetic holdout accuracy is not real-battery validation.",
+  "feature_importances": {
+    "voltage": 0.21510373123918658,
+    "current": 0.5412511693989368,
+    "temperature": 0.0006441431651193478,
+    "soc": 0.12090120178324168,
+    "soh": 0.021048843173881445,
+    "power": 0.003475587726717794,
+    "recent_average_current": 0.0952658998265467,
+    "recent_average_power": 0.0016133771891429667,
+    "device_load": 0.0006960464972267776
+  }
+}
