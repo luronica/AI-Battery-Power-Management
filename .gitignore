@@ -9,3 +9,4 @@ models/*.tmp
 .env.*
 !.env.example
 *.log
+CAPSTONE_MASTER_REPORT.md
