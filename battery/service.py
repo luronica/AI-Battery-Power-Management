@@ -29,6 +29,18 @@ class BatteryService:
         self.last_sim_time = None
         self.last_esp_time = None
         self._restore(self.db.load_state() or {})
+        # Recover an exhausted demo on restart, but preserve live-device state
+        # and non-depleted sessions. Never recharge during normal sampling.
+        if self.source == "simulation" and self.simulator.soc <= 0:
+            self.control({"reset": True})
+        elif self.latest is None and self.controls["simulation_enabled"]:
+            self._transaction(self._initial_sample)
+
+    def _initial_sample(self, events=None):
+        """Persist a real pipeline result without inventing elapsed consumption."""
+        sample = self.simulator.sample(0, self.controls["device_load"],
+                                       POLICIES[self.modes["simulation"]]["current_factor"])
+        return self._process(sample, 0, events)
 
     def _restore(self, state):
         self.controls = state.get("controls", {"simulation_enabled": True, "device_load": "MEDIUM", "time_scale": 120})
@@ -138,11 +150,13 @@ class BatteryService:
                     self.modes["simulation"] = "BALANCED"
                     self.hot["simulation"] = False
                     self.last_sim_time = None
-                    if self.source == "simulation":
-                        self.latest = None
-                    events.append((utc_now(), "Simulation reset to 78% charge; a new session started. Stored history retained.", "info"))
+                    self.last_esp_time = None
+                    self.source, self.latest = "simulation", None
+                    # Reset is a complete demo restart, even from ESP32 or pause.
+                    self.controls.update(simulation_enabled=True, device_load="MEDIUM")
+                    events.append((utc_now(), "Simulation reset to 85% charge at MEDIUM load; a new session started. Stored history retained.", "info"))
                 for key in ("simulation_enabled", "device_load"):
-                    if key in changes and self.controls[key] != changes[key]:
+                    if not changes.get("reset") and key in changes and self.controls[key] != changes[key]:
                         self.controls[key] = changes[key]
                         events.append((utc_now(), f"Demo control changed: {key} = {changes[key]}", "info"))
                         if key == "simulation_enabled":
@@ -150,7 +164,10 @@ class BatteryService:
                             self.last_esp_time = None
                             if changes[key]:
                                 self.source, self.latest = "simulation", None
-                self.db.save(self._state(), events)
+                if self.latest is None and self.controls["simulation_enabled"]:
+                    self._initial_sample(events)
+                else:
+                    self.db.save(self._state(), events)
             self._transaction(operation)
             return self.snapshot()
 

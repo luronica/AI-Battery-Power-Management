@@ -1,6 +1,7 @@
 """Load only the locally trained artifact; degrade to a bounded physical estimate."""
 
 import math
+import logging
 import warnings
 
 import joblib
@@ -24,10 +25,13 @@ class RuntimePredictor:
                 raise ValueError("Feature schema mismatch")
             if artifact["metadata"]["sklearn_version"] != sklearn.__version__:
                 raise ValueError("Retrain with the installed scikit-learn version")
+            if artifact["model"].n_features_in_ != len(FEATURES):
+                raise ValueError("Model feature count mismatch")
             self.model = artifact["model"]
             self.metadata = artifact["metadata"]
             self.reason = "Loaded locally trained synthetic-data model."
         except Exception as error:
+            logging.exception("Runtime model loading failed: %s", path)
             self.reason = f"Model unavailable ({type(error).__name__}); calculated fallback in use."
 
     @staticmethod
@@ -53,6 +57,7 @@ class RuntimePredictor:
                         "model_status": "ACTIVE", "runtime_method": "ML regression",
                         "model_reason": "Synthetic-data Random Forest prediction; hours at current operating conditions."}
             except Exception:
+                logging.exception("Runtime model prediction failed")
                 reason = "Prediction failed; calculated fallback in use."
         elif self.model is not None:
             reason = "Outside the model training range; calculated fallback in use."

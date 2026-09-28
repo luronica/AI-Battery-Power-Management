@@ -24,12 +24,14 @@ class DeploymentTests(unittest.TestCase):
 
     def test_wsgi_export_and_health(self):
         self.assertTrue(callable(app))
+        initial_id = self.service.latest["id"]
         response = self.client.get("/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json, {"status": "healthy", "model": "loaded", "database": "connected"})
         self.assertEqual(response.headers["Cache-Control"], "no-store")
         with self.service.db.connection() as connection:
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM telemetry").fetchone()[0], 0)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM telemetry").fetchone()[0], 1)
+        self.assertEqual(self.service.latest["id"], initial_id)
 
     def test_health_preserves_fallback_and_reports_db_failure(self):
         self.service.predictor.model = None

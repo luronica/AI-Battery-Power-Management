@@ -32,6 +32,9 @@ def check(base):
     state = get_json("/api/telemetry")[1]
     assert state["telemetry"]["id"] == reading["id"] and not state["controls"]["simulation_enabled"]
     status, state = get_json("/api/control", {"reset": True, "simulation_enabled": True, "device_load": "HIGH"})
+    assert status == 200 and state["controls"]["device_load"] == "MEDIUM"
+    assert state["telemetry"]["soc"] > 80 and state["telemetry"]["model_status"] == "ACTIVE"
+    status, state = get_json("/api/control", {"device_load": "HIGH"})
     assert status == 200 and state["controls"]["device_load"] == "HIGH"
     print("PASS: homepage, health, live sampling, SQLite-backed history, ESP32 POST, model prediction, controls")
 

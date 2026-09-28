@@ -34,13 +34,13 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.mimetype, "text/javascript" if path.endswith(".js") else "text/css")
         self.assertEqual(self.client.get("/api/missing").status_code, 404)
-        self.assertEqual(self.client.get("/api/telemetry").json["system"]["status"], "WAITING")
+        self.assertEqual(self.client.get("/api/telemetry").json["system"]["status"], "ONLINE")
         self.service.tick(0)
         self.service.tick(2)
         first = self.client.get("/api/telemetry").json
         second = self.client.get("/api/telemetry").json
         self.assertEqual(first["telemetry"]["id"], second["telemetry"]["id"])
-        self.assertEqual(len(second["history"]), 2)
+        self.assertEqual(len(second["history"]), 3)
         self.assertGreater(first["telemetry"]["energy_consumed"], 0)
         self.assertEqual(first["telemetry"]["model_status"], "ACTIVE")
         for limit in ("0", "61", "abc", "1.2", "-1", "²", "9" * 5000):
@@ -61,7 +61,7 @@ class ApiTests(unittest.TestCase):
         snapshot = self.client.get("/api/telemetry").json
         self.assertEqual(len(snapshot["history"]), 1)
         with self.service.db.connection() as connection:
-            self.assertEqual(connection.execute("SELECT COUNT(*) FROM telemetry").fetchone()[0], 3)
+            self.assertEqual(connection.execute("SELECT COUNT(*) FROM telemetry").fetchone()[0], 4)
 
     def test_input_validation_and_size_limit(self):
         for payload in ([], None, {}, {**SAMPLE, "voltage": "3.85"},
@@ -89,8 +89,7 @@ class ApiTests(unittest.TestCase):
         resumed = self.service.tick(100)
         self.assertEqual(resumed["integration_seconds"], 0)
         self.assertEqual(resumed["device_load"], 0.9)
-        self.client.post("/api/control", json={"reset": True})
-        reset = self.service.tick(200)
+        reset = self.client.post("/api/control", json={"reset": True}).json["telemetry"]
         self.assertEqual(reset["energy_consumed"], 0)
         self.assertNotEqual(reset["session_id"], first["session_id"])
         self.assertEqual(len(self.service.snapshot()["history"]), 1)

@@ -11,8 +11,8 @@ LOADS = {"LOW": 0.15, "MEDIUM": 0.45, "HIGH": 0.90}
 class BatterySimulator:
     def __init__(self, state=None, seed=42):
         state = state or {}
-        self.soc = state.get("soc", 78.0)
-        self.current = state.get("current", 0.20)
+        self.soc = state.get("soc", 85.0)
+        self.current = state.get("current", 0.15)
         self.temperature = state.get("temperature", 28.4)
         self.random = random.Random(seed)
 

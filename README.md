@@ -187,12 +187,12 @@ Gunicorn is a Unix/Linux server; use `python app.py` on Windows. This workspace 
 
 ## 5. Demo walkthrough
 
-1. Open the dashboard: simulation starts with approximately 78% charge, 94% assumed health, and MEDIUM load.
+1. Open the dashboard: a fresh database immediately receives a processed simulation sample at approximately 85% charge, 94% assumed health, and MEDIUM load. Non-depleted sessions resume on restart; depleted simulation sessions automatically start a new healthy demo session. ESP32 state is preserved.
 2. Select LOW; let readings settle for about 10 seconds. Note current, power, and runtime.
 3. Select HIGH; current and power rise, runtime decreases, and the control policy may change. Saving policies may subsequently reduce current, demonstrating feedback.
 4. Observe the five live charts and the policy actions. Up to 60 readings for the selected source/session are shown.
 5. Turn simulation OFF: samples stop and the dashboard says PAUSED. Stored readings remain visible.
-6. Use Reset simulation to start a new simulation session at 78% charge, zero accumulated energy, and simulation ON. The selected load is retained. Historical rows remain in SQLite.
+6. Use Reset simulation to immediately start a new session at approximately 85% charge, zero accumulated energy, MEDIUM load, and simulation ON. Runtime, policy, and recommendations are recalculated through the normal pipeline before the reset response returns. Historical rows remain in SQLite; charts show the new session only.
 7. Send the ESP32 example below: the dashboard switches to ESP32 and simulation pauses automatically.
 8. Send an elevated-temperature example to demonstrate CRITICAL mode and recommendations. Temperatures outside the training range show FALLBACK.
 9. Turn simulation ON to return to the saved simulation state. Stop ongoing ESP32 posts first; a new post always selects ESP32 again.
@@ -354,7 +354,7 @@ Optional fields (at least one is required):
 {"simulation_enabled": true, "device_load": "HIGH", "reset": false}
 ```
 
-`simulation_enabled` and `reset` are JSON booleans. `device_load` is LOW, MEDIUM, or HIGH. `reset: true` resets simulation state only; use `simulation_enabled: true` as well to resume it. The dashboard reset button does both. Returns **200 OK** with the same snapshot shape as GET.
+`simulation_enabled` and `reset` are JSON booleans. `device_load` is LOW, MEDIUM, or HIGH. `reset: true` starts a healthy simulation, enables it, and restores MEDIUM load, taking precedence over other fields in that request. To use another load, send a subsequent control request. Reset preserves the ESP32 estimator and all stored history. Returns **200 OK** with the same snapshot shape as GET and an immediately processed sample.
 
 Error responses use `{"status":"error","error":"explanation"}`: 400 for validation/malformed JSON, 413 for oversized bodies, 415 for unsupported content type, 404 for missing APIs, and 503 for SQLite failures.
 
@@ -392,6 +392,10 @@ Simulation and ESP32 use the same telemetry schema but separate charge/energy es
 Return to local-only binding in a new terminal, or run `Remove-Item Env:FLASK_HOST` before the next launch.
 
 ## 12. Validation and limitations
+
+Healthy-demo initialization update: all 26 backend tests pass, including five new lifecycle/load/fallback checks. Fresh databases and reset responses immediately contain a processed healthy sample; reset always restores MEDIUM load and enables simulation. Live HTTP checks and the dashboard JavaScript syntax check also pass. The model remains the existing nine-feature Random Forest; no retraining or dataset change was required. A depleted sample uses fallback because zero charge/current are outside the training domain. Model loading and inference exceptions now retain their full details in server logs.
+
+The existing headless browser suite also passed: five updating charts, load/pause/reset controls, ESP32 takeover, fallback, missing-chart handling, and 1440/1366/1024/768/390/320-pixel layouts. Its Chromium debugger timed out inside the restricted execution environment; the same test passed when run outside that restriction with temporary storage.
 
 Backend tests cover energy units, gradual discharge and load response, all policy modes, missing/corrupt model fallback, out-of-domain readings, real model prediction, validated API input, source isolation, pause/reset, history limits, concurrency, persistence, integration gaps, stale state, and database rollback. The browser test checks five actual Chart.js instances, load-driven current/power/runtime changes, pause/reset, ESP32 takeover, fallback labeling, mobile width, and behavior when the chart asset fails.
 
